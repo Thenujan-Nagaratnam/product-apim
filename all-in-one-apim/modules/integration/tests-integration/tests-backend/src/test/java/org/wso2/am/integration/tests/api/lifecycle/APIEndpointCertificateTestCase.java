@@ -300,7 +300,7 @@ public class APIEndpointCertificateTestCase extends APIManagerLifecycleBaseTest 
         Assert.assertEquals(response.getStatusCode(), 200);
         response = restAPIPublisher.deleteEndpointCertificate("endpoint-2");
         Assert.assertEquals(response.getStatusCode(), 200);
-        // Thread.sleep(60500); // Sleep to reload the transport
+        Thread.sleep(60500); // Sleep to reload the transport
         waitForSSLProfileReload();
         Map<String, String> requestHeaders = new HashMap<>();
         requestHeaders.put("accept", "application/json");
