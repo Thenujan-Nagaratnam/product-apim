@@ -26,6 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
@@ -47,6 +48,7 @@ import org.wso2.carbon.automation.engine.context.AutomationContext;
 import org.wso2.carbon.automation.engine.context.TestUserMode;
 import org.wso2.carbon.automation.test.utils.http.client.HttpResponse;
 import org.wso2.carbon.integration.common.admin.client.LogViewerClient;
+import org.wso2.carbon.integration.common.utils.mgt.ServerConfigurationManager;
 import org.wso2.carbon.logging.view.data.xsd.LogEvent;
 
 import java.io.File;
@@ -76,6 +78,7 @@ public class APIEndpointCertificateTestCase extends APIManagerLifecycleBaseTest 
     private final String API_NAME = "APIEndpointCertificateTestCase";
     private final String API_CONTEXT = "APIEndpointCertificateTestCase";
     private final String API_VERSION_1_0_0 = "1.0.0";
+    private ServerConfigurationManager serverConfigurationManager;
     int securedEndpointPort;
     String securedEndpointHost;
     String applicationId;
@@ -97,6 +100,23 @@ public class APIEndpointCertificateTestCase extends APIManagerLifecycleBaseTest 
                 new Object[]{TestUserMode.SUPER_TENANT_ADMIN},
                 new Object[]{TestUserMode.TENANT_ADMIN},
         };
+    }
+
+    @BeforeTest(alwaysRun = true)
+    public void loadConfiguration() throws Exception {
+
+        superTenantKeyManagerContext = new AutomationContext(APIMIntegrationConstants.AM_PRODUCT_GROUP_NAME,
+                APIMIntegrationConstants.AM_KEY_MANAGER_INSTANCE, TestUserMode.SUPER_TENANT_ADMIN);
+
+        try {
+            serverConfigurationManager = new ServerConfigurationManager(superTenantKeyManagerContext);
+
+            serverConfigurationManager.applyConfiguration(new File(getAMResourceLocation()
+                    + File.separator + "configFiles" + File.separator + "common" +
+                    File.separator + "deployment.toml"));
+        } catch (Exception e) {
+            throw new APIManagerIntegrationTestException("Error while changing server configuration", e);
+        }
     }
 
     @BeforeClass(alwaysRun = true)
@@ -300,7 +320,6 @@ public class APIEndpointCertificateTestCase extends APIManagerLifecycleBaseTest 
         Assert.assertEquals(response.getStatusCode(), 200);
         response = restAPIPublisher.deleteEndpointCertificate("endpoint-2");
         Assert.assertEquals(response.getStatusCode(), 200);
-        Thread.sleep(60500); // Sleep to reload the transport
         waitForSSLProfileReload();
         Map<String, String> requestHeaders = new HashMap<>();
         requestHeaders.put("accept", "application/json");
